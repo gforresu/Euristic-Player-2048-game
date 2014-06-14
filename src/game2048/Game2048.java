@@ -1,29 +1,35 @@
 package game2048;
 
-import java.util.logging.Logger;
 import javafx.application.Application;
 import javafx.application.ConditionalFeature;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuBar;
-import javafx.scene.control.MenuItem;
+import javafx.scene.control.RadioMenuItem;
+import javafx.scene.control.RadioMenuItemBuilder;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 
+
 /**
- * @author bruno.borges@oracle.com
+ * @author Giacomo Forresu
  */
 public class Game2048 extends Application {
 
     private GameManager gameManager;
     private Bounds gameBounds;
-
+    private int isAuto = 0;        
+       
+    
     @Override
     public void start(Stage primaryStage) {
         gameManager = new GameManager();
@@ -40,25 +46,65 @@ public class Game2048 extends Application {
 
         Scene scene = new Scene(root, 600, 720);
         MenuBar menuBar = new MenuBar();
-        
+
         menuBar.prefWidthProperty().bind(primaryStage.widthProperty());
-        
+
         menuBar.getStyleClass().add("tendina");
-        Menu menu = new Menu("File"); 
-        menu.getItems().add(new MenuItem("New"));
         
+       Menu menu = new Menu("Gioco");
+       
+       ToggleGroup toggle = new ToggleGroup();
+                     
+        
+         RadioMenuItem automaticPlayer = RadioMenuItemBuilder.create()
+        .toggleGroup(toggle)
+        .text("Automatico")
+        .selected(false)
+        .build();
+        
+        
+        menu.getItems().add(automaticPlayer);
+        
+        
+        
+        EventHandler automatico = new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                
+                //Il giocatore automatico era gia` stato selezionato
+                //viene quindi disattivato
+                if( isAuto == 1 ){
+                    
+                    automaticPlayer.setSelected(false);
+                    isAuto = 0;
+                    
+                    
+                    
+                }
+                    
+                //Giocatore automatico attivato
+                else {
+                   automaticPlayer.setSelected(true);
+                   isAuto = 1;
+                }
+                
+            }
+            
+        };
+              
         menuBar.getMenus().add(menu);
-        
+
         HBox tendina = new HBox();
         tendina.getChildren().add(menuBar);
-        
+
         root.getChildren().add(tendina);
-        //menuBar.setLayoutY(20);
-        
-        //root.getChildren().add(menuBar);
-        
+       
         scene.getStylesheets().add("game2048/game.css");
+              
         addKeyHandler(scene);
+        
+        menu.getItems().get(0).addEventHandler(ActionEvent.ANY, automatico);
+                      
         addSwipeHandlers(scene);
 
         if (isARMDevice()) {
@@ -80,24 +126,36 @@ public class Game2048 extends Application {
     private boolean isARMDevice() {
         return System.getProperty("os.arch").toUpperCase().contains("ARM");
     }
-
+    
+   
     private void addKeyHandler(Scene scene) {
-        scene.setOnKeyPressed(ke -> {
-            KeyCode keyCode = ke.getCode();
-            if (keyCode.equals(KeyCode.S)) {
-                gameManager.saveSession();
-                return;
-            }
-            if (keyCode.equals(KeyCode.R)) {
-                gameManager.restoreSession();
-                return;
-            }
-            if (keyCode.isArrowKey() == false) {
-                return;
-            }
-            Direction direction = Direction.valueFor(keyCode);
-            gameManager.move(direction);
-        });
+                  
+            scene.setOnKeyPressed(ke -> {
+                
+                if( isAuto == 0 ){
+                
+                        KeyCode keyCode = ke.getCode();
+                        if (keyCode.equals(KeyCode.S)) {
+                            gameManager.saveSession();
+                            return;
+                        }
+                        if (keyCode.equals(KeyCode.R)) {
+                            gameManager.restoreSession();
+                            return;
+                        }
+                        if (keyCode.isArrowKey() == false) {
+                            return;
+                        }
+                       Direction direction = Direction.valueFor(keyCode);
+                       gameManager.move(direction);
+
+                }
+
+            });
+
+        
+        
+  
     }
 
     private void addSwipeHandlers(Scene scene) {
